@@ -1,53 +1,62 @@
 import jieba
 import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+from sklearn.model_selection import cross_val_predict
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.linear_model import LogisticRegression
-
-test_query=input('请输入您要预测的内容:')
-
-dataset = pd.read_csv(filepath_or_buffer=r"D:\nlp-epda\hub-ktxw\马志勇\week01\dataset.csv", sep="\t", header=None)
-input_sententce = dataset[0].apply(lambda x : "".join(jieba.lcut(x)))
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, accuracy_score
 
 def print_head(title: str) -> None:
     format_str = "-" * 20 + title + "-" * 20
     print(format_str)
 
 
-def case_01():
-    case_title = "KNN模型 预测"
-    print_head(case_title)
+def run():
+    print_head("1. 加载文本数据 和 预处理")
+    dataset = pd.read_csv(filepath_or_buffer=r"../week01/dataset.csv", sep="\t", header=None)
+    print("预览加载文本数据")
+    print(dataset.head(5))
 
-    vector = TfidfVectorizer()
-    vector.fit(input_sententce.values)
-    input_feature = vector.transform(input_sententce.values)
+    print("jiaba进行中文分词, 并用空格进行分隔")
+    input_sentences = dataset[0].apply(lambda x: " ".join(jieba.lcut(x)))
+    labels = dataset[1]
 
-    knn_model = KNeighborsClassifier()
-    knn_model.fit(input_feature,dataset[1].values)
-
-    test_sentence = "".join(jieba.lcut(test_query))
-    test_feature = vector.transform([test_sentence])
-
-    print("待预测的文本", test_query)
-    print(f"{case_title} 结果:", knn_model.predict(test_feature))
+    print_head("2. 提取特征向量")
+    vectorizer = TfidfVectorizer() # CountVectorizer
+    vectorizer.fit(input_sentences.values)
+    input_features = vectorizer.transform(input_sentences.values)
+    # input_features = vectorizer.fit_transform(input_sentences.values)
 
 
-def case_02():
-    case_title = "线性模型 预测"
-    print_head(case_title)
+    print(f"打印 特征矩阵的形状: {input_features.shape}")
 
-    vector = TfidfVectorizer()
-    vector.fit(input_sententce.values)
-    input_feature = vector.transform(input_sententce.values)
+    print_head("3. 模型训练与评估")
+    # 定义四种不同的模型
+    models = {
+        'KNN (K-Nearest Neighbors)': KNeighborsClassifier(),
+        'Naive Bayes (MultinomialNB)': MultinomialNB(),
+        'SVM (Support Vector Classifier)': SVC(kernel='linear'),
+        'Decision Tree': DecisionTreeClassifier()
+    }
 
-    lm = LogisticRegression()
-    lm.fit(input_feature, dataset[1].values)
+    for name, model in models.items():
+        print("\n")
+        print_head(f"正在评估 {name} 模型")
 
-    test_sentence = "".join(jieba.lcut(test_query))
-    test_feature = vector.transform([test_sentence])
+        # 使用 cross_val_predict 进行 5次 交叉验证,获取每个样本的预测结果
+        y_pred = cross_val_predict(model, input_features, labels, cv=5)
 
-    print("待预测的文本", test_query)
-    print(f"{case_title} 结果:", lm.predict(test_feature))
 
-case_01()
-case_02()
+        # 基于交叉验证的预测结果, 计算并打印准确率和分类报告
+        print(f"平均准确率: {accuracy_score(labels, y_pred):.4f}")
+        report = classification_report(labels, y_pred, zero_division=0)
+        print(report)
+
+
+
+if __name__ == "__main__":
+    run()
