@@ -173,7 +173,7 @@ def build_model_lossfunc_optim(output_dim, vocab_size, hidden_dim=128):
 
 
 
-def training(dataloader, model, criterion, optimizer, num_epochs=10):
+def training_and_eval(dataloader, model, criterion, optimizer, num_epochs=10):
     """
     训练模型
     :param dataloader:
@@ -183,9 +183,11 @@ def training(dataloader, model, criterion, optimizer, num_epochs=10):
     :param training_num:
     :return:
     """
+    loss_history = []
     # 循环比遍历10次 训练和更新模型
     # 训练和更新后 就可以为给定的文本进行推理
     # 推理其实就是做正向传播,把我们传入的文本也转变成向量,然后通过模型去推理
+
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -198,7 +200,25 @@ def training(dataloader, model, criterion, optimizer, num_epochs=10):
             running_loss += loss.item()
             if idx % 20 == 0:
                 print(f"Batch 个数 {idx}, 当前Batch Loss: {loss.item()}")
-        print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {running_loss / len(dataloader):.4f}")
+        epoch_loss = running_loss / len(dataloader)
+        loss_history.append(epoch_loss)
+        print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss:.4f}")
+    model.eval()
+    return loss_history
+
+def draw_loss(loss_history_small,):
+    # --- 绘制损失曲线 ---
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, num_epochs + 1), loss_history_small,
+             label=f'Hidden Dim = {hidden_dim_1} (Parameters: {get_parameter_count(model_small)})')
+    plt.plot(range(1, num_epochs + 1), loss_history_large,
+             label=f'Hidden Dim = {hidden_dim_2} (Parameters: {get_parameter_count(model_large)})')
+    plt.title('Training Loss Comparison')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 # 分类文本
 def classify_text(text, model, char_to_index, vocab_size, max_len, index_to_label):
@@ -252,7 +272,7 @@ if __name__ == "__main__":
     model, criterion, optimizer = build_model_lossfunc_optim(output_dim, vocab_size)
 
     # step -4 training model
-    training(dataloader, model, criterion, optimizer, num_epochs=10)
+    epoch_loss = training_and_eval(dataloader, model, criterion, optimizer, num_epochs=10)
 
 
 
