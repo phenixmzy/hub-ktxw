@@ -3,56 +3,15 @@ import numpy as np # CPU环境(非深度学习中)下的矩阵运算、向量运
 import matplotlib.pyplot as plt
 import torch.nn as nn
 
-# 0 构建数据集合, 并展示图
-# def test_build_dataset():
-#     test_X_numpy = np.linspace(0, 2 * np.pi, 100).reshape(-1, 1)
-#     test_y_numpy = np.sin(test_X_numpy)
-#
-#     # 将 NumPy数组转换为PyTorch 张量
-#     test_X = torch.from_numpy(test_X_numpy).float()
-#     test_y = torch.from_numpy(test_y_numpy).float()
-#
-#     test_model = nn.Linear(1,1)
-#     test_loss_fn = torch.nn.MSELoss()  # 回归任务里面的损失函数
-#     test_optimizer = torch.optim.Adam(test_model.parameters(), lr=0.01)
-#     test_num_epochs = 5000
-#     for epoch in range(test_num_epochs):
-#         test_y_pred = test_model(test_X)
-#         test_loss = test_loss_fn(test_y_pred, test_y)
-#         test_optimizer.zero_grad()
-#         test_loss.backward()
-#         test_optimizer.step()
-#
-#         if (epoch + 1) % 100 == 0:
-#             print(f'Epoch [{epoch + 1}/{test_num_epochs}], Loss: {test_loss.item():.4f}')
-#
-#     test_model.eval()
-#     with torch.no_grad():
-#         test_y_predicted = test_model(test_X).numpy()
-#
-#     plt.figure(figsize=(10, 6))
-#     plt.scatter(test_X_numpy, test_y_numpy, label='test Raw data', color='blue', alpha=0.6)
-#     plt.plot(test_X_numpy, test_y_predicted, label=f'test_Model', color='red', linewidth=2)
-#     plt.xlabel('X')
-#     plt.ylabel('y')
-#     plt.legend()
-#     plt.grid(True)
-#     plt.show()
-#
-#
-# test_build_dataset()
-
-
 # step-1. 生成模拟数据 (与之前相同)
-## 形状为(100, 1) 左闭右开的 二维数组, 其中包括 100个在[0,1) 范围内均匀分布的随机浮点数
-# X_numpy = np.random.rand(100, 1) * 10
-# 批量训练 100 * 1
-X_numpy = np.linspace(0, 2 * np.pi, 100).reshape(-1, 1)
 
-## y的 np.random.randn(100, 1) 是一个扰动噪音,是演示中故意增加难度
-#y_numpy = 2 * X_numpy + 1 + np.random.randn(100, 1)
+# 噪音 - 噪音太大 会影响 拟合的形状, 因此 除以一定的系数 k, 噪音可以 加到 X 也可以 加到 y上
+k = 20
+noise_numpy = np.random.randn(100, 1) / k
+
+X_numpy = np.linspace(0, 2 * np.pi, 100).reshape(-1, 1) + noise_numpy
+
 y_numpy = np.sin(X_numpy)
-#+ np.random.randn(100, 1)/20
 
 ## 从numpy 转成 tensor 张量, torch中 所有的计算通过tensor计算
 X = torch.from_numpy(X_numpy).float()
